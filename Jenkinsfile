@@ -1,52 +1,53 @@
 pipeline {
   agent any
 
-  // Demo cron trigger: runs every 2 minutes for classroom testing.
-  // Replace with production-friendly schedule when needed.
   triggers {
-    cron('H/2 * * * *')
+    // run the pipeline every 10 minutes (use small interval for demo)
+    // change as needed. H/10 * * * * = roughly every 1 minutes
+    cron('H/1 * * * *')
   }
 
   stages {
     stage('Checkout') {
       steps {
-        echo "Checking out the repo..."
+        echo "Checking out source"
         checkout scm
       }
     }
 
     stage('Build') {
       steps {
-        echo "Build (demo) - prepare artifacts here"
-        // Use Groovy triple-quoted string so ${env.BRANCH_NAME} is interpolated
-        sh """
-          echo "Running demo build on branch ${env.BRANCH_NAME}"
-        """
+        echo "Building (simulated)"
+        sh 'echo build-step'
       }
     }
 
-    stage('Manual Approval') {
+    stage('Pre-Deploy Approval') {
       steps {
         script {
-          // Pauses the pipeline waiting for manual approval
-          input message: "Approve deployment for branch ${env.BRANCH_NAME}?", ok: "Proceed"
+          // input step pauses the pipeline and awaits user action in Jenkins UI
+          def userInput = input(
+            message: "Approve deployment?",
+            ok: "Deploy now",
+            parameters: [
+              string(name: 'RELEASE_NOTE', defaultValue: 'No notes', description: 'Enter release notes (optional)')
+            ]
+          )
+          echo "User approved with note: ${userInput}"
         }
       }
     }
 
     stage('Deploy') {
       steps {
-        echo "Deploy stage: simulating deployment"
-        sh """
-          echo "Deployment successful on branch ${env.BRANCH_NAME}"
-        """
+        echo "Deploying (simulated)"
+        sh 'echo deploy-step'
       }
     }
   }
 
   post {
-    success { echo "Pipeline finished SUCCESS" }
-    failure { echo "Pipeline finished FAILURE" }
-    always  { echo "Pipeline run complete" }
+    success { echo "Pipeline completed SUCCESS" }
+    failure { echo "Pipeline FAILED" }
   }
 }
