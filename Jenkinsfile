@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   // Demo cron trigger: runs every 2 minutes for classroom testing.
-  // In production use a longer schedule (e.g. H H * * *).
+  // Replace with production-friendly schedule when needed.
   triggers {
     cron('H/2 * * * *')
   }
@@ -17,16 +17,19 @@ pipeline {
 
     stage('Build') {
       steps {
-        echo "Building (demo step) - compile or prepare artifacts here"
-        sh 'echo "build step: nothing to build for this demo"'
+        echo "Build (demo) - prepare artifacts here"
+        // Use Groovy triple-quoted string so ${env.BRANCH_NAME} is interpolated
+        sh """
+          echo "Running demo build on branch ${env.BRANCH_NAME}"
+        """
       }
     }
 
     stage('Manual Approval') {
       steps {
-        // The input step pauses the pipeline and waits for a user to click "Proceed"
         script {
-          input message: "Approve deployment?", ok: "Proceed"
+          // Pauses the pipeline waiting for manual approval
+          input message: "Approve deployment for branch ${env.BRANCH_NAME}?", ok: "Proceed"
         }
       }
     }
@@ -34,7 +37,9 @@ pipeline {
     stage('Deploy') {
       steps {
         echo "Deploy stage: simulating deployment"
-        sh 'echo "Deployment successful on branch ${env.BRANCH_NAME}"'
+        sh """
+          echo "Deployment successful on branch ${env.BRANCH_NAME}"
+        """
       }
     }
   }
@@ -42,5 +47,6 @@ pipeline {
   post {
     success { echo "Pipeline finished SUCCESS" }
     failure { echo "Pipeline finished FAILURE" }
+    always  { echo "Pipeline run complete" }
   }
 }
